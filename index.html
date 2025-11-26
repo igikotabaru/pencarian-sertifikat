@@ -1,116 +1,274 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pencarian Sertifikat</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencarian Sertifikat Lomba</title>
+    <!-- Memuat Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mengatur font agar terlihat profesional */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fc; /* Warna latar belakang lembut */
+        }
+        /* Style untuk container utama */
+        #app-container {
+            max-width: 900px;
+        }
+    </style>
 </head>
-<body class="p-0" style="background: linear-gradient(135deg,#90caf9,#e3f2fd);">
+<body class="p-4 sm:p-8">
 
-  <div class="py-5 text-center text-white" style="background:#0d47a1; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
-    <h1 class="fw-bold">Pencarian Sertifikat</h1>
-    <p class="mb-0">Cari nama atau kategori sertifikat dengan cepat dan mudah</p>
-  </div>
+    <div id="app-container" class="mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10 transition-all duration-300">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-blue-700 mb-2">Pencarian Pemenang & Sertifikat Lomba</h1>
+            <p class="text-gray-600">Temukan data peserta dan tautan unduhan sertifikat berdasarkan nama atau kategori lomba.</p>
+        </header>
 
-  <div class="container mt-4">
-    <h2 class="mb-4 text-center">Pencarian Sertifikat</h2>
+        <!-- Form Pencarian -->
+        <div class="space-y-4 mb-8 p-6 bg-blue-50 rounded-lg shadow-inner">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <!-- Input Nama -->
+                <div class="md:col-span-1">
+                    <label for="inputNama" class="block text-sm font-medium text-gray-700 mb-1">Nama Peserta</label>
+                    <input type="text" id="inputNama" placeholder="Ketik nama lengkap atau sebagian..."
+                           class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                </div>
 
-    <div class="card p-4 shadow rounded-3" style="background:#e3f2fd; border-left:6px solid #0d6efd;">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-5">
-          <label class="form-label">Nama Peserta</label>
-          <input type="text" id="namaInput" class="form-control" placeholder="Masukkan nama..." />
-        </div>
+                <!-- Dropdown Kategori -->
+                <div class="md:col-span-1">
+                    <label for="selectKategori" class="block text-sm font-medium text-gray-700 mb-1">Kategori Lomba</label>
+                    <select id="selectKategori"
+                            class="w-full p-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <option value="">-- Semua Kategori --</option>
+                        <option value="Cerdas Cermat Matematika">Cerdas Cermat Matematika</option>
+                        <option value="Karya Koding Blok">Karya Koding Blok</option>
+                        <option value="Video Penerapan Pembelajaran Mendalam">Video Penerapan Pembelajaran Mendalam</option>
+                    </select>
+                </div>
 
-        <div class="col-md-5">
-          <label class="form-label">Kategori Sertifikat</label>
-          <select id="kategoriSelect" class="form-select">
-            <option value="">Semua Kategori</option>
-          </select>
-        </div>
-
-        <div class="col-md-2 d-grid">
-          <button id="cariBtn" class="btn btn-primary btn-lg">Cari</button>
-        </div>
-      </div>
-    </div>
-
-        
-      </div>
-    </div>
-
-    <div id="cardResults" class="row mt-4" style="display:none;"></div>
-  </div>
-
-  <script>
-    let data = [];
-    let kategoriSet = new Set();
-
-    async function loadCSV() {
-      const response = await fetch('./data.csv');
-      const text = await response.text();
-      const rows = text.trim().split(/\r?\n/).map(r => r.split(','));(r => r.split(','));
-
-      const headers = rows[0];
-      data = rows.slice(1).map(r => Object.fromEntries(r.map((v, i) => [headers[i], v])));
-
-      // Ambil kategori unik
-      data.forEach(row => {
-        if (row['kategori']) kategoriSet.add(row['kategori']);
-      });
-
-      // Isi dropdown kategori
-      kategoriSet.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k;
-        opt.textContent = k;
-        document.getElementById('kategoriSelect').appendChild(opt);
-      });
-
-      // Buat header tabel
-      const headRow = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}<th>Download</th></tr>`;
-      document.getElementById('tableHead').innerHTML = headRow;
-    }
-
-    function searchData() {
-      const nama = document.getElementById('namaInput').value.toLowerCase();
-      const kategori = document.getElementById('kategoriSelect').value;
-
-      let results = data;
-
-      if (nama) {
-        results = results.filter(row => row['nama'] && row['nama'].toLowerCase().includes(nama));
-      }
-
-      if (kategori) {
-        results = results.filter(row => row['kategori'] === kategori);
-      }
-
-      const cardContainer = document.getElementById('cardResults');
-      cardContainer.innerHTML = results.map(row => {
-        return `
-          <div class='col-md-4 mb-3'>
-            <div class='card shadow-sm border-0 h-100'>
-              <div class='card-body'>
-                <h5 class='card-title fw-bold'>${row['nama'] || 'Nama tidak ada'}</h5>
-                <p class='card-text mb-1'><strong>Kategori:</strong> ${row['kategori'] || '-'}</p>
-                <p class='card-text'><strong>Keterangan:</strong> ${row['keterangan'] || '-'}</p>
-                <a href='${row['link']}' target='_blank' class='btn btn-primary w-100 mt-2'>Download Sertifikat</a>
-              </div>
+                <!-- Tombol Cari -->
+                <div class="md:col-span-1">
+                    <button id="btnCari"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-200 transform hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                        Cari Data
+                    </button>
+                </div>
             </div>
-          </div>`;
-      }).join('');
+        </div>
 
-      cardContainer.style.display = results.length ? 'flex' : 'none';').style.display = results.length ? 'table' : 'none';
-    }
+        <!-- Area Hasil Pencarian -->
+        <div id="loadingIndicator" class="text-center py-8 hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-3"></div>
+            <p class="text-blue-600 font-medium">Memuat data...</p>
+        </div>
 
-    document.getElementById('namaInput').addEventListener('input', searchData);
-    document.getElementById('cariBtn').addEventListener('click', searchData);
-    document.getElementById('kategoriSelect').addEventListener('change', searchData);('change', searchData);
+        <div id="resultsContainer" class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Hasil akan dimasukkan di sini -->
+        </div>
 
-    loadCSV();
-  </script>
+        <div id="messageBox" class="text-center mt-8 py-4 px-6 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg hidden">
+            <!-- Pesan seperti "Data tidak ditemukan" akan muncul di sini -->
+        </div>
+
+    </div>
+
+    <script>
+        // Variabel global
+        const CSV_FILE_NAME = 'data.csv';
+        let allData = [];
+
+        // Elemen DOM
+        const inputNama = document.getElementById('inputNama');
+        const selectKategori = document.getElementById('selectKategori');
+        const btnCari = document.getElementById('btnCari');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const messageBox = document.getElementById('messageBox');
+
+        /**
+         * Fungsi utilitas untuk membersihkan string CSV (menghapus tanda kutip)
+         * @param {string} str String input dari CSV.
+         * @returns {string} String yang sudah dibersihkan.
+         */
+        function cleanString(str) {
+            if (str && typeof str === 'string') {
+                // Menghapus tanda kutip di awal dan akhir
+                return str.replace(/^"|"$/g, '').trim();
+            }
+            return str;
+        }
+
+        /**
+         * Mengambil dan memparsing file CSV.
+         */
+        async function loadCSV() {
+            loadingIndicator.classList.remove('hidden');
+            messageBox.classList.add('hidden');
+            resultsContainer.innerHTML = '';
+            
+            try {
+                // Menandai file CSV yang diunggah
+                const dataUrl = CSV_FILE_NAME; 
+                const response = await fetch(dataUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Gagal memuat file CSV: ${response.statusText}`);
+                }
+                
+                const csvText = await response.text();
+                
+                // Memisahkan baris
+                const lines = csvText.split(/\r\n|\n/).filter(line => line.trim() !== '');
+
+                if (lines.length < 2) {
+                    throw new Error("File CSV kosong atau tidak memiliki data.");
+                }
+
+                // Header: Nama,Asal Sekolah,Kategori,Link Sertifikat
+                const headers = lines[0].split(',').map(h => cleanString(h));
+                
+                // Memparsing data baris
+                allData = lines.slice(1).map(line => {
+                    // Menggunakan regex sederhana untuk memisahkan koma yang tidak ada di dalam tanda kutip
+                    // Ini adalah parser CSV dasar, mungkin gagal untuk CSV yang sangat kompleks.
+                    const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+
+                    if (values.length === 0) return null;
+
+                    const row = {};
+                    headers.forEach((header, i) => {
+                        // Membersihkan nilai sebelum disimpan
+                        row[header] = values[i] ? cleanString(values[i]) : '';
+                    });
+
+                    // Pastikan 4 kolom penting ada, dan Link Sertifikat ada nilainya
+                    if (row['Nama'] && row['Asal Sekolah'] && row['Kategori'] && row['Link Sertifikat']) {
+                        return row;
+                    }
+                    return null; // Abaikan baris yang datanya tidak lengkap
+                }).filter(item => item !== null); // Hapus baris yang gagal diurai atau tidak lengkap
+                
+                // Tampilkan semua data saat pertama kali dimuat (opsional, untuk memastikan data terload)
+                // renderResults(allData);
+
+            } catch (error) {
+                console.error("Kesalahan saat memuat atau memparsing CSV:", error);
+                showNotification(`Gagal memuat data: ${error.message}. Pastikan file ${CSV_FILE_NAME} ada dan formatnya benar.`);
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Fungsi untuk menampilkan pesan notifikasi di messageBox
+         * @param {string} message Pesan yang akan ditampilkan.
+         * @param {string} type Tipe pesan (sukses, error, warning).
+         */
+        function showNotification(message, type = 'warning') {
+            let bgColor = 'bg-yellow-100';
+            let borderColor = 'border-yellow-300';
+            let textColor = 'text-yellow-800';
+
+            if (type === 'error') {
+                bgColor = 'bg-red-100';
+                borderColor = 'border-red-300';
+                textColor = 'text-red-800';
+            } else if (type === 'success') {
+                bgColor = 'bg-green-100';
+                borderColor = 'border-green-300';
+                textColor = 'text-green-800';
+            }
+            
+            messageBox.className = `text-center mt-8 py-4 px-6 ${bgColor} border ${borderColor} ${textColor} rounded-lg`;
+            messageBox.innerHTML = `<p class="font-semibold">${message}</p>`;
+            messageBox.classList.remove('hidden');
+        }
+
+        /**
+         * Menampilkan hasil pencarian dalam bentuk card.
+         * @param {Array} results Array data peserta yang ditemukan.
+         */
+        function renderResults(results) {
+            resultsContainer.innerHTML = '';
+            messageBox.classList.add('hidden');
+
+            if (results.length === 0) {
+                showNotification("Data peserta tidak ditemukan. Coba gunakan kata kunci lain.");
+                return;
+            }
+
+            results.forEach(item => {
+                const card = `
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-2xl transition duration-300 p-6 flex flex-col justify-between">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-500 mb-1">Nama Peserta:</p>
+                            <h3 class="text-xl font-bold text-blue-800 mb-3">${item['Nama']}</h3>
+                            
+                            <p class="text-sm font-semibold text-gray-500 mt-3 mb-1">Asal Sekolah:</p>
+                            <p class="text-base text-gray-700 font-medium">${item['Asal Sekolah']}</p>
+                            
+                            <p class="text-sm font-semibold text-gray-500 mt-3 mb-1">Kategori Lomba:</p>
+                            <span class="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">${item['Kategori']}</span>
+                        </div>
+                        
+                        <a href="${item['Link Sertifikat']}" target="_blank"
+                           class="mt-6 w-full text-center bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded-lg transition duration-200 transform hover:scale-[1.02]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707l-.707-.707V8a6 6 0 00-6-6zM10 18a3 3 0 110-6 3 3 0 010 6z" />
+                            </svg>
+                            Download Sertifikat
+                        </a>
+                    </div>
+                `;
+                resultsContainer.innerHTML += card;
+            });
+        }
+
+        /**
+         * Menjalankan logika pencarian (filter).
+         */
+        function handleSearch() {
+            const namaQuery = inputNama.value.toLowerCase().trim();
+            const kategoriQuery = selectKategori.value;
+
+            if (allData.length === 0) {
+                showNotification("Data belum dimuat. Mohon tunggu sebentar atau muat ulang halaman.", 'error');
+                return;
+            }
+            
+            const filteredResults = allData.filter(item => {
+                const namaMatch = item['Nama'].toLowerCase().includes(namaQuery);
+                
+                let kategoriMatch = true;
+                if (kategoriQuery) {
+                    kategoriMatch = item['Kategori'] === kategoriQuery;
+                }
+                
+                return namaMatch && kategoriMatch;
+            });
+
+            renderResults(filteredResults);
+        }
+
+        // --- Event Listeners ---
+        btnCari.addEventListener('click', handleSearch);
+
+        // Menambahkan kemampuan pencarian saat menekan 'Enter' di input Nama
+        inputNama.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSearch();
+            }
+        });
+        
+        // Memuat data saat halaman selesai dimuat
+        window.onload = loadCSV;
+
+    </script>
 </body>
 </html>
-
