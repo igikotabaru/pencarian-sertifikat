@@ -48,7 +48,7 @@
     let kategoriSet = new Set();
 
     async function loadCSV() {
-      const response = await fetch('data.csv');
+      const response = await fetch('./data.csv');
       const text = await response.text();
       const rows = text.trim().split(/\r?\n/).map(r => r.split(','));(r => r.split(','));
 
@@ -113,3 +113,4 @@
   </script>
 </body>
 </html>
+
