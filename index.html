@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pencarian Sertifikat</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-0" style="background: linear-gradient(135deg,#90caf9,#e3f2fd);">
+
+  <div class="py-5 text-center text-white" style="background:#0d47a1; box-shadow:0 4px 10px rgba(0,0,0,0.3);">
+    <h1 class="fw-bold">Pencarian Sertifikat</h1>
+    <p class="mb-0">Cari nama atau kategori sertifikat dengan cepat dan mudah</p>
+  </div>
+
+  <div class="container mt-4">
+    <h2 class="mb-4 text-center">Pencarian Sertifikat</h2>
+
+    <div class="card p-4 shadow rounded-3" style="background:#e3f2fd; border-left:6px solid #0d6efd;">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label">Nama Peserta</label>
+          <input type="text" id="namaInput" class="form-control" placeholder="Masukkan nama..." />
+        </div>
+
+        <div class="col-md-5">
+          <label class="form-label">Kategori Sertifikat</label>
+          <select id="kategoriSelect" class="form-select">
+            <option value="">Semua Kategori</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 d-grid">
+          <button id="cariBtn" class="btn btn-primary btn-lg">Cari</button>
+        </div>
+      </div>
+    </div>
+
+        
+      </div>
+    </div>
+
+    <div id="cardResults" class="row mt-4" style="display:none;"></div>
+  </div>
+
+  <script>
+    let data = [];
+    let kategoriSet = new Set();
+
+    async function loadCSV() {
+      const response = await fetch('data.csv');
+      const text = await response.text();
+      const rows = text.trim().split('
+').map(r => r.split(','));
+
+      const headers = rows[0];
+      data = rows.slice(1).map(r => Object.fromEntries(r.map((v, i) => [headers[i], v])));
+
+      // Ambil kategori unik
+      data.forEach(row => {
+        if (row['kategori']) kategoriSet.add(row['kategori']);
+      });
+
+      // Isi dropdown kategori
+      kategoriSet.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = k;
+        document.getElementById('kategoriSelect').appendChild(opt);
+      });
+
+      // Buat header tabel
+      const headRow = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}<th>Download</th></tr>`;
+      document.getElementById('tableHead').innerHTML = headRow;
+    }
+
+    function searchData() {
+      const nama = document.getElementById('namaInput').value.toLowerCase();
+      const kategori = document.getElementById('kategoriSelect').value;
+
+      let results = data;
+
+      if (nama) {
+        results = results.filter(row => row['nama'] && row['nama'].toLowerCase().includes(nama));
+      }
+
+      if (kategori) {
+        results = results.filter(row => row['kategori'] === kategori);
+      }
+
+      const cardContainer = document.getElementById('cardResults');
+      cardContainer.innerHTML = results.map(row => {
+        return `
+          <div class='col-md-4 mb-3'>
+            <div class='card shadow-sm border-0 h-100'>
+              <div class='card-body'>
+                <h5 class='card-title fw-bold'>${row['nama'] || 'Nama tidak ada'}</h5>
+                <p class='card-text mb-1'><strong>Kategori:</strong> ${row['kategori'] || '-'}</p>
+                <p class='card-text'><strong>Keterangan:</strong> ${row['keterangan'] || '-'}</p>
+                <a href='${row['link']}' target='_blank' class='btn btn-primary w-100 mt-2'>Download Sertifikat</a>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      cardContainer.style.display = results.length ? 'flex' : 'none';').style.display = results.length ? 'table' : 'none';
+    }
+
+    document.getElementById('namaInput').addEventListener('input', searchData);
+    document.getElementById('cariBtn').addEventListener('click', searchData);
+    document.getElementById('kategoriSelect').addEventListener('change', searchData);('change', searchData);
+
+    loadCSV();
+  </script>
+</body>
+</html>
