@@ -22,7 +22,7 @@
 
     <div id="app-container" class="mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10 transition-all duration-300">
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-blue-700 mb-2">Pencarian Sertifikat Lomba</h1>
+            <h1 class="text-3xl font-extrabold text-blue-700 mb-2">Pencarian Pemenang & Sertifikat Lomba</h1>
             <p class="text-gray-600">Temukan data peserta dan tautan unduhan sertifikat berdasarkan nama atau kategori lomba.</p>
         </header>
 
@@ -114,10 +114,16 @@
             try {
                 let dataUrl = CSV_FILE_NAME; 
 
-                // --- START FIX: Menggunakan mekanisme akses file yang diunggah ---
-                if (typeof __uploaded_files !== 'undefined' && __uploaded_files[CSV_FILE_NAME]) {
-                    // Jika file diakses melalui mekanisme unggahan (seperti di lingkungan Canvas)
-                    dataUrl = __uploaded_files[CSV_FILE_NAME].contentFetchId;
+                // --- FIX: Memastikan penggunaan URL file yang diunggah di lingkungan Canvas ---
+                const fileEntry = typeof __uploaded_files !== 'undefined' ? __uploaded_files[CSV_FILE_NAME] : null;
+                
+                if (fileEntry && fileEntry.contentFetchId) {
+                    // Menggunakan Content Fetch ID yang disediakan oleh lingkungan Canvas
+                    dataUrl = fileEntry.contentFetchId;
+                } else {
+                    // Mencegah panggilan fetch('data.csv') yang menyebabkan error 'Failed to parse URL'
+                    // dan memberikan pesan error yang lebih informatif kepada pengguna.
+                    throw new Error(`File '${CSV_FILE_NAME}' tidak dapat diakses. Pastikan file telah diunggah dan terdeteksi dengan benar di lingkungan Canvas.`);
                 }
                 // --- END FIX ---
                 
@@ -164,7 +170,7 @@
                 
             } catch (error) {
                 console.error("Kesalahan saat memuat atau memparsing CSV:", error);
-                showNotification(`Gagal memuat data: ${error.message}. Pastikan file ${CSV_FILE_NAME} telah diunggah dan formatnya benar.`, 'error');
+                showNotification(`Gagal memuat data: ${error.message}`, 'error');
             } finally {
                 loadingIndicator.classList.add('hidden');
                 // Tampilkan pesan awal jika tidak ada data setelah memuat
