@@ -22,7 +22,7 @@
 
     <div id="app-container" class="mx-auto bg-white shadow-xl rounded-xl p-6 md:p-10 transition-all duration-300">
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-blue-700 mb-2">Pencarian Sertifikat Peserta Lomba</h1>
+            <h1 class="text-3xl font-extrabold text-blue-700 mb-2">Pencarian Sertifikat Lomba</h1>
             <p class="text-gray-600">Temukan data peserta dan tautan unduhan sertifikat berdasarkan nama atau kategori lomba.</p>
         </header>
 
@@ -91,16 +91,16 @@
         const messageBox = document.getElementById('messageBox');
 
         /**
-         * Fungsi utilitas untuk membersihkan string CSV (menghapus tanda kutip)
+         * Fungsi utilitas untuk membersihkan string CSV (menghapus tanda kutip dan spasi berlebih).
          * @param {string} str String input dari CSV.
          * @returns {string} String yang sudah dibersihkan.
          */
         function cleanString(str) {
             if (str && typeof str === 'string') {
-                // Menghapus tanda kutip di awal dan akhir
+                // Menghapus tanda kutip di awal dan akhir, serta spasi di awal/akhir
                 return str.replace(/^"|"$/g, '').trim();
             }
-            return str;
+            return ''; // Pastikan mengembalikan string kosong jika input tidak valid
         }
 
         /**
@@ -112,8 +112,15 @@
             resultsContainer.innerHTML = '';
             
             try {
-                // Menandai file CSV yang diunggah
-                const dataUrl = CSV_FILE_NAME; 
+                let dataUrl = CSV_FILE_NAME; 
+
+                // --- START FIX: Menggunakan mekanisme akses file yang diunggah ---
+                if (typeof __uploaded_files !== 'undefined' && __uploaded_files[CSV_FILE_NAME]) {
+                    // Jika file diakses melalui mekanisme unggahan (seperti di lingkungan Canvas)
+                    dataUrl = __uploaded_files[CSV_FILE_NAME].contentFetchId;
+                }
+                // --- END FIX ---
+                
                 const response = await fetch(dataUrl);
                 
                 if (!response.ok) {
@@ -130,6 +137,7 @@
                 }
 
                 // Header: Nama,Asal Sekolah,Kategori,Link Sertifikat
+                // Header juga harus dibersihkan untuk memastikan kecocokan dengan data
                 const headers = lines[0].split(',').map(h => cleanString(h));
                 
                 // Memparsing data baris
@@ -142,25 +150,30 @@
 
                     const row = {};
                     headers.forEach((header, i) => {
-                        // Membersihkan nilai sebelum disimpan
+                        // Membersihkan nilai sebelum disimpan (penting untuk menghilangkan spasi di kategori)
                         row[header] = values[i] ? cleanString(values[i]) : '';
                     });
 
                     // Pastikan 4 kolom penting ada, dan Link Sertifikat ada nilainya
+                    // Setelah dibersihkan, kita cek kembali ketersediaan data
                     if (row['Nama'] && row['Asal Sekolah'] && row['Kategori'] && row['Link Sertifikat']) {
                         return row;
                     }
                     return null; // Abaikan baris yang datanya tidak lengkap
                 }).filter(item => item !== null); // Hapus baris yang gagal diurai atau tidak lengkap
                 
-                // Tampilkan semua data saat pertama kali dimuat (opsional, untuk memastikan data terload)
-                // renderResults(allData);
-
             } catch (error) {
                 console.error("Kesalahan saat memuat atau memparsing CSV:", error);
-                showNotification(`Gagal memuat data: ${error.message}. Pastikan file ${CSV_FILE_NAME} ada dan formatnya benar.`);
+                showNotification(`Gagal memuat data: ${error.message}. Pastikan file ${CSV_FILE_NAME} telah diunggah dan formatnya benar.`, 'error');
             } finally {
                 loadingIndicator.classList.add('hidden');
+                // Tampilkan pesan awal jika tidak ada data setelah memuat
+                if (allData.length === 0) {
+                     showNotification("Tidak ada data yang valid ditemukan dalam file CSV. Periksa format kolom: Nama, Asal Sekolah, Kategori, Link Sertifikat.", 'error');
+                } else {
+                    // Coba tampilkan semua hasil secara default setelah pemuatan sukses
+                    handleSearch(); 
+                }
             }
         }
 
@@ -233,17 +246,23 @@
          * Menjalankan logika pencarian (filter).
          */
         function handleSearch() {
+            // Nilai input Nama dan Kategori sudah bersih dari spasi berlebih
             const namaQuery = inputNama.value.toLowerCase().trim();
             const kategoriQuery = selectKategori.value;
 
             if (allData.length === 0) {
-                showNotification("Data belum dimuat. Mohon tunggu sebentar atau muat ulang halaman.", 'error');
+                // Jangan tampilkan error jika sedang loading, hanya jika benar-benar kosong setelah loading
+                if (loadingIndicator.classList.contains('hidden')) {
+                     showNotification("Data belum dimuat atau kosong. Coba muat ulang halaman.", 'error');
+                }
                 return;
             }
             
             const filteredResults = allData.filter(item => {
+                // Pencocokan Nama: selalu diubah ke huruf kecil untuk pencarian case-insensitive
                 const namaMatch = item['Nama'].toLowerCase().includes(namaQuery);
                 
+                // Pencocokan Kategori: item['Kategori'] sudah dibersihkan saat loadCSV
                 let kategoriMatch = true;
                 if (kategoriQuery) {
                     kategoriMatch = item['Kategori'] === kategoriQuery;
@@ -272,4 +291,3 @@
     </script>
 </body>
 </html>
-
